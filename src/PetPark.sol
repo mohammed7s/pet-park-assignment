@@ -21,6 +21,10 @@ contract PetPark {
     // Mapping to keep track of borrowed animals
     mapping(address => Animal) public borrowedAnimals;
 
+    // Mapping to store the previous Gender and Age for each caller
+    mapping(address => Gender) private previousGender;
+    mapping(address => uint8) private previousAge;
+
     // Event emitted when an animal is added to the park
     event Added(AnimalType indexed animalType, uint8 age);
 
@@ -42,9 +46,26 @@ contract PetPark {
         _;
     }
 
+    // // Modifier to ensure address has not called function with other values before 
+    // modifier callerHasSameDetails(uint8 _age, Gender _gender) {
+    //     // Store the current Gender and Age for the caller if not stored before
+    //     if (previousGender[msg.sender].gender == 0) {
+    //         previousGender[msg.sender] = _gender;
+    //         previousAge[msg.sender] = _age;
+    //     }
+        
+    //     // Check if the caller has called this function before with different Gender and Age values
+    //     require(previousGender[msg.sender] == _gender,"Invalid Gender"); 
+        
+    //     require(previousAge[msg.sender] == _age, "Invalid Age");
+    //     _;
+    // }
+
     // Modifier to ensure that the caller is eligible to borrow a certain animal type
     modifier eligibleForAnimal(AnimalType _animalType, Gender _gender, uint8 _age) {
         require(_age > 0, "Invalid Age");
+        // Check if the animal type is valid
+        require(_animalType != AnimalType.None, "Invalid animal type");
 
         if (_gender == Gender.Male){
             require(_animalType == AnimalType.Dog || _animalType == AnimalType.Fish, "Invalid animal for men");
@@ -65,7 +86,7 @@ contract PetPark {
         require(_age > 0, "Invalid Age");
         require(_animalType != AnimalType.None, "Invalid animal");
 
-        animalCounts[_animalType] += _age;
+        animalCounts[_animalType]++;
 
         emit Added(_animalType, _age);
     }
@@ -75,9 +96,8 @@ contract PetPark {
         external
         notBorrowed
         eligibleForAnimal(_animalType, _gender, _age)
-    {
-        // Check if the animal type is valid
-        require(_animalType != AnimalType.None, "Invalid animal type");
+        //callerHasSameDetails(_age, _gender)
+        {
 
         require(animalCounts[_animalType] > 0, "Selected animal not available");
 
